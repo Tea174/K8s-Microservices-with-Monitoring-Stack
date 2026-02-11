@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: holmesgpt
+  namespace: ex2-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: holmesgpt
+  template:
+    metadata:
+      labels:
+        app: holmesgpt
+    spec:
+      serviceAccountName: holmesgpt-sa
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: holmesgpt
+          image: ghcr.io/robusta-dev/holmesgpt:latest
+          env:
+            - name: MODEL
+              value: "gemini/gemini-1.5-pro-latest"
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: GEMINI_API_KEY
+                  name: holmesgpt-secrets
+            - name: PROMETHEUS_URL
+              value: "http://prometheus-kube-prometheus-prometheus:9091"
+            - name: ALERTMANAGER_URL
+              value: "http://prometheus-kube-prometheus-alertmanager:9093"
+          ports:
+            - containerPort: 8081
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: holmesgpt-service
+  namespace: ex2-dev
+spec:
+  selector:
+    app: holmesgpt
+  ports:
+    - port: 8081
+  type: ClusterIP

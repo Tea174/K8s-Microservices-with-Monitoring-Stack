@@ -26,7 +26,8 @@ metadata:
   name: postgres
   namespace: ex2-dev
 spec:
-  serviceName: postgres-headless
+  serviceName: postgres-headless # Stable network identity
+  #volumeClaimTemplates:           #  Each pod gets own PVC
   replicas: 1
   selector:
     matchLabels:

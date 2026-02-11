@@ -133,4 +133,59 @@ I change replicas in frontend-deployment.yaml and backend-deployment.yaml from 1
 ``kubectl port-forward $POD_NAME 8080:5000 -n ex2-dev``
 ![img_11.png](img_11.png)
 
+### Test with HolmesGPT
+##### Create a secret for API key 
+```kubectl create secret generic holmesgpt-secrets --from-literal=GEMINI_API_KEY=gemini-api-key-here -n ex2-dev```
 
+#####  Create HolmesGPT Deployment 
+- infrastructure/holmesgpt-deployment.yaml
+- infrastructure/holmesgpt-rbac.yaml
+
+##### Apply the code:
+- Apply RBAC first
+```kubectl apply -f infrastructure/holmesgpt-rbac.yaml```
+
+- Deploy HolmesGPT
+  ```kubectl apply -f infrastructure/holmesgpt-deployment.yaml```
+
+- Verify
+  ```kubectl get pods -n ex2-dev -l app=holmesgpt```
+![img_13.png](img_13.png)
+
+- Error ImagePullBackOff so see the pod's detail:
+![img_14.png](img_14.png)
+![img_15.png](img_15.png)
+
+
+- This forces the deployment to restart its pods
+```kubectl rollout restart deployment holmesgpt -n ex2-dev```
+
+- Check the secret : ```kubectl get secrets -n ex2-dev | grep ghcr```
+
+- Check if the deployment actually has the imagePullSecrets field:
+``kubectl get deployment holmesgpt -n ex2-dev -o yaml | grep -A 5 imagePullSecrets``
+
+- Check current secret content: 
+``kubectl get secret ghcr-secret -n ex2-dev -o jsonpath='{.data.\.dockerconfigjson}' | base64 -d | jq``
+
+##### error: unable to forward port because pod is not running. Current status=Pending
+![img_12.png](img_12.png)
+
+
+### ⇒ Did not work so I tried with helm (https://artifacthub.io/packages/helm/robusta/holmes)
+``helm install holmes robusta/holmes   --namespace ex2-dev   --create-namespace   -f infrastructure/holmes-values.yaml``
+![img_16.png](img_16.png)
+![img_17.png](img_17.png)
+![img_18.png](img_18.png)
+
+- Check environment variables:
+``kubectl exec -n ex2-dev holmes-holmes-6845bb75b7-2pd66 -- env | grep -E "PROMETHEUS|GEMINI|MODEL|ALERTMANAGER"``
+![img_19.png](img_19.png)
+
+- Check if HolmesGPT can reach Prometheus:
+``kubectl exec -n ex2-dev holmes-holmes-6845bb75b7-2pd66 -- curl -s http://prometheus-kube-prometheus-prometheus:9090/-/healthy``
+![img_20.png](img_20.png)
+
+- See HolmesGPT with Fast API:
+  ```kubectl port-forward -n ex2-dev svc/holmes-holmes 8080:80```
+![img_21.png](img_21.png)

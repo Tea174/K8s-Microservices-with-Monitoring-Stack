@@ -24,3 +24,5 @@ infrastructure/secret.yaml
 
 # Kubernetes generated
 *.log
+
+/infrastructure/.env

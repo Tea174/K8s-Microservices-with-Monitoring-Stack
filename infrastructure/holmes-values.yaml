@@ -1,0 +1,18 @@
+# holmes-values.yaml
+enablePostgres: false
+
+additionalEnvVars:
+  - name: MODEL
+    value: "gemini/gemini-1.5-pro"
+  - name: GEMINI_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: holmes-api-keys
+        key: GEMINI_API_KEY
+  - name: PROMETHEUS_URL
+    value: "http://prometheus-kube-prometheus-prometheus:9090"
+  - name: ALERTMANAGER_URL
+    value: "http://prometheus-kube-prometheus-alertmanager:9093"
+
+rbac:
+  create: true
